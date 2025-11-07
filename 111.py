@@ -1,17 +1,17 @@
 import streamlit as st
 import random
-import math
+import time
 
 # 配置参数
 CONFIG = {
-    'tip_count': 100,       # 提示数量
-    'font_size': 16,        # 字体大小
-    'heart_scale': 15,      # 爱心缩放
-    'container_width': 800, # 页面宽度
-    'container_height': 600 # 页面高度
+    'tip_count': 20,          # 同时显示的提示数量
+    'font_size': 18,
+    'container_width': 800,
+    'container_height': 600,
+    'move_step': 5,           # 每次移动像素
+    'update_interval': 0.1    # 秒
 }
 
-# 温馨提示列表
 TIPS = [
     "很开心遇见你", "每天都要元气满满", "记得吃水果",
     "保持好心情", "好好爱自己", "我想你了", "梦想成真",
@@ -20,7 +20,6 @@ TIPS = [
     "天冷了，多穿衣服"
 ]
 
-# 背景颜色列表
 BG_COLORS = [
     "#FFC0CB", "#87CEEB", "#90EE90", "#E6E6FA", "#FFFFE0",
     "#DDA0DD", "#FF7F50", "#FFE4C4", "#7FFFD4", "#FFE4E1",
@@ -28,53 +27,84 @@ BG_COLORS = [
 ]
 
 st.set_page_config(page_title="温馨提示", layout="wide")
-st.title("💖 爱心温馨提示 💖")
+st.title("💖 动态温馨提示 💖")
 
 # 父容器
 st.markdown(
     f"""
-    <div style="
+    <div id="container" style="
         position: relative;
         width:{CONFIG['container_width']}px;
         height:{CONFIG['container_height']}px;
+        border:1px solid #ddd;
         margin:auto;
         background-color:#fff;
-        border:1px solid #ddd;
+        overflow:hidden;
     ">
+    </div>
     """, unsafe_allow_html=True
 )
 
-# 心形坐标生成函数（改进版）
-def get_heart_coordinates(index, total):
-    t = math.pi - (2 * math.pi * index / total)  # 从 pi 到 -pi，保证对称
-    x = 16 * math.sin(t)**3
-    y = 13*math.cos(t) - 5*math.cos(2*t) - 2*math.cos(3*t) - math.cos(4*t)
-    return x, -y  # y取负让心形正立
+# 初始化提示块
+tips = []
+for i in range(CONFIG['tip_count']):
+    tip = {
+        'text': random.choice(TIPS),
+        'bg': random.choice(BG_COLORS),
+        'x': random.randint(0, CONFIG['container_width'] - 100),
+        'y': random.randint(0, CONFIG['container_height'] - 40),
+        'dx': random.choice([-1,1]) * CONFIG['move_step'],
+        'dy': random.choice([-1,1]) * CONFIG['move_step'],
+        'id': f"tip{i}"
+    }
+    tips.append(tip)
 
-total = CONFIG['tip_count']
-coords = [get_heart_coordinates(i, total) for i in range(total)]
+# 用HTML + JS渲染动画
+html_tips = ""
+for tip in tips:
+    html_tips += f"""
+    <div id="{tip['id']}" style="
+        position:absolute;
+        left:{tip['x']}px;
+        top:{tip['y']}px;
+        background-color:{tip['bg']};
+        padding:8px 12px;
+        border-radius:12px;
+        font-size:{CONFIG['font_size']}px;
+        text-align:center;
+        white-space:nowrap;
+        animation: fadeIn 0.5s;
+    ">✨ {tip['text']} ✨</div>
+    """
 
-# 显示提示
-for i, (x, y) in enumerate(coords):
-    tip = random.choice(TIPS)
-    bg = random.choice(BG_COLORS)
-    st.markdown(
-        f"""
-        <div style="
-            position:absolute;
-            left:{CONFIG['container_width']/2 + x*CONFIG['heart_scale']}px;
-            top:{CONFIG['container_height']/2 + y*CONFIG['heart_scale']}px;
-            background-color:{bg};
-            padding:8px 12px;
-            border-radius:12px;
-            font-size:{CONFIG['font_size']}px;
-            text-align:center;
-        ">
-            {tip}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+html_script = f"""
+<script>
+var tips = {[
+    {'id': t['id'], 'x': t['x'], 'y': t['y'], 'dx': t['dx'], 'dy': t['dy']} for t in tips
+]};
+var width = {CONFIG['container_width']};
+var height = {CONFIG['container_height']};
 
-# 关闭父容器
-st.markdown("</div>", unsafe_allow_html=True)
+function moveTips() {{
+    for(var i=0;i<tips.length;i++){{
+        var t = tips[i];
+        var elem = document.getElementById(t.id);
+        t.x += t.dx;
+        t.y += t.dy;
+        if(t.x <=0 || t.x >= width - 120) t.dx = -t.dx;
+        if(t.y <=0 || t.y >= height - 40) t.dy = -t.dy;
+        elem.style.left = t.x + "px";
+        elem.style.top = t.y + "px";
+    }}
+}}
+setInterval(moveTips, {int(CONFIG['update_interval']*1000)});
+</script>
+<style>
+@keyframes fadeIn {{
+  from {{opacity:0; transform: scale(0.5);}}
+  to {{opacity:1; transform: scale(1);}}
+}}
+</style>
+"""
+
+st.markdown(html_tips + html_script, unsafe_allow_html=True)
