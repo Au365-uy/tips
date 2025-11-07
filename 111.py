@@ -7,14 +7,14 @@ from streamlit.components.v1 import html
 CONFIG = {
     'tip_count': 20,
     'font_size': 16,
-    'container_width': 390,   # 苹果12逻辑宽度
-    'container_height': 844,  # 苹果12逻辑高度
-    'move_step': 5,
-    'update_interval': 20,       # 帧率 50fps
-    'delay_between_tips': 1200,  # 弹窗出现慢一点
+    'container_width': 390,    # 苹果12逻辑宽度
+    'container_height': 844,   # 苹果12逻辑高度
+    'move_step': 2,            # 移动速度慢一点
+    'update_interval': 20,     # 帧率 50fps
+    'delay_between_tips': 800, # 弹窗出现延迟保持原样
     'tip_width': 150,
     'tip_height': 50,
-    'vertical_margin': 200       # 上下移动范围缩小
+    'vertical_margin': 100     # 上下移动范围缩小
 }
 
 TIPS = [
@@ -31,6 +31,7 @@ BG_COLORS = [
     "#F0FFF0", "#FFF0F5", "#FDF5E6"
 ]
 
+# ----------------- 页面 -----------------
 st.set_page_config(page_title="❤️❤️❤️", layout="wide")
 st.title("❤️❤️❤️")  # 标题三个爱心
 
@@ -42,7 +43,7 @@ for i in range(CONFIG['tip_count']):
         'text': random.choice(TIPS),
         'bg': random.choice(BG_COLORS),
         'x': random.randint(0, CONFIG['container_width'] - CONFIG['tip_width']),
-        'y': random.randint(CONFIG['vertical_margin']//2, CONFIG['container_height'] - CONFIG['vertical_margin']//2 - CONFIG['tip_height']),
+        'y': random.randint(CONFIG['vertical_margin'], CONFIG['container_height'] - CONFIG['vertical_margin'] - CONFIG['tip_height']),
         'dx': random.choice([-CONFIG['move_step'], CONFIG['move_step']]),
         'dy': random.choice([-CONFIG['move_step'], CONFIG['move_step']])
     }
@@ -101,7 +102,7 @@ function moveTips() {{
         // 左右边界碰撞
         if(t.x <=0 || t.x >= {CONFIG['container_width']} - {CONFIG['tip_width']}) t.dx = -t.dx;
         // 上下边界碰撞，缩小上下范围
-        if(t.y <= {CONFIG['vertical_margin']//2} || t.y >= {CONFIG['container_height']} - {CONFIG['vertical_margin']//2} - {CONFIG['tip_height']}) t.dy = -t.dy;
+        if(t.y <= {CONFIG['vertical_margin']} || t.y >= {CONFIG['container_height']} - {CONFIG['vertical_margin']} - {CONFIG['tip_height']}) t.dy = -t.dy;
 
         elem.style.left = t.x + "px";
         elem.style.top = t.y + "px";
