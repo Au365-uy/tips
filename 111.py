@@ -29,8 +29,8 @@ BG_COLORS = [
 ]
 
 # ----------------- 页面 -----------------
-st.set_page_config(page_title="✨", layout="wide")
-st.title("✨")  # 改成星星
+st.set_page_config(page_title="❤️❤️❤️", layout="wide")
+st.title("❤️❤️❤️")  # 改成三个爱心
 
 # ----------------- 初始化提示 -----------------
 tips = []
