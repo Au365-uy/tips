@@ -6,7 +6,7 @@ import math
 CONFIG = {
     'tip_count': 100,       # 提示数量
     'font_size': 16,        # 字体大小
-    'heart_scale': 20,      # 爱心缩放
+    'heart_scale': 15,      # 爱心缩放
     'container_width': 800, # 页面宽度
     'container_height': 600 # 页面高度
 }
@@ -30,26 +30,26 @@ BG_COLORS = [
 st.set_page_config(page_title="温馨提示", layout="wide")
 st.title("💖 爱心温馨提示 💖")
 
-# 父容器，固定宽高，用于绝对定位
+# 父容器
 st.markdown(
     f"""
     <div style="
         position: relative;
         width:{CONFIG['container_width']}px;
         height:{CONFIG['container_height']}px;
-        border:1px solid #ddd;
         margin:auto;
         background-color:#fff;
+        border:1px solid #ddd;
     ">
     """, unsafe_allow_html=True
 )
 
-# 生成心形坐标
+# 心形坐标生成函数（改进版）
 def get_heart_coordinates(index, total):
-    t = 2 * math.pi * index / total
+    t = math.pi - (2 * math.pi * index / total)  # 从 pi 到 -pi，保证对称
     x = 16 * math.sin(t)**3
     y = 13*math.cos(t) - 5*math.cos(2*t) - 2*math.cos(3*t) - math.cos(4*t)
-    return x, -y  # y 取负让心形正立
+    return x, -y  # y取负让心形正立
 
 total = CONFIG['tip_count']
 coords = [get_heart_coordinates(i, total) for i in range(total)]
@@ -76,5 +76,5 @@ for i, (x, y) in enumerate(coords):
         unsafe_allow_html=True
     )
 
-# 关闭父容器 div
+# 关闭父容器
 st.markdown("</div>", unsafe_allow_html=True)
