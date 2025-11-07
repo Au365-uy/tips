@@ -29,8 +29,8 @@ BG_COLORS = [
 ]
 
 # ----------------- 页面 -----------------
-st.set_page_config(page_title="温馨提示", layout="wide")
-st.title("💖 随机弹窗温馨提示 💖")
+st.set_page_config(page_title="✨", layout="wide")
+st.title("✨")  # 改成星星
 
 # ----------------- 初始化提示 -----------------
 tips = []
@@ -52,7 +52,6 @@ html_code = f"""
     position: relative;
     width:{CONFIG['container_width']}px;
     height:{CONFIG['container_height']}px;
-    border:1px solid #ddd;
     margin:auto;
     background-color:#fff;
     overflow:hidden;
