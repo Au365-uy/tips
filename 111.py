@@ -3,14 +3,15 @@ import random
 import json
 from streamlit.components.v1 import html
 
+# ----------------- 配置 -----------------
 CONFIG = {
     'tip_count': 20,
     'font_size': 16,
+    'container_width': 390,   # 苹果12逻辑宽度
+    'container_height': 844,  # 苹果12逻辑高度
     'move_step': 5,
-    'update_interval': 20,       # 50fps
-    'delay_between_tips': 800,   # 弹窗间隔
-    'tip_width': 150,
-    'tip_height': 50
+    'update_interval': 20,       # 帧率 50fps
+    'delay_between_tips': 800    # 每个提示弹出延迟 800ms
 }
 
 TIPS = [
@@ -27,8 +28,9 @@ BG_COLORS = [
     "#F0FFF0", "#FFF0F5", "#FDF5E6"
 ]
 
+# ----------------- 页面 -----------------
 st.set_page_config(page_title="❤️❤️❤️", layout="wide")
-st.title("❤️❤️❤️")
+st.title("❤️❤️❤️")  # 标题三个爱心
 
 # ----------------- 初始化提示 -----------------
 tips = []
@@ -37,6 +39,8 @@ for i in range(CONFIG['tip_count']):
         'id': f"tip{i}",
         'text': random.choice(TIPS),
         'bg': random.choice(BG_COLORS),
+        'x': random.randint(0, CONFIG['container_width'] - 150),
+        'y': random.randint(0, CONFIG['container_height'] - 50),
         'dx': random.choice([-CONFIG['move_step'], CONFIG['move_step']]),
         'dy': random.choice([-CONFIG['move_step'], CONFIG['move_step']])
     }
@@ -46,8 +50,8 @@ for i in range(CONFIG['tip_count']):
 html_code = f"""
 <div id="container" style="
     position: relative;
-    width: 100vw;
-    height: 90vh;
+    width:{CONFIG['container_width']}px;
+    height:{CONFIG['container_height']}px;
     margin:auto;
     background-color:#fff;
     overflow:hidden;
@@ -57,17 +61,10 @@ html_code = f"""
 <script>
 var tips = {json.dumps(tips)};
 var container = document.getElementById("container");
-var container_width = container.clientWidth;
-var container_height = container.clientHeight;
-var tip_width = {CONFIG['tip_width']};
-var tip_height = {CONFIG['tip_height']};
 
-// 初始化随机位置
+// 创建每个提示但先隐藏
 for(var i=0;i<tips.length;i++){{
     var t = tips[i];
-    t.x = Math.floor(Math.random()*(container_width - tip_width));
-    t.y = Math.floor(Math.random()*(container_height - tip_height));
-
     var div = document.createElement("div");
     div.id = t.id;
     div.innerHTML = t.text;
@@ -79,11 +76,11 @@ for(var i=0;i<tips.length;i++){{
     div.style.borderRadius = "12px";
     div.style.fontSize = "{CONFIG['font_size']}px";
     div.style.whiteSpace = "nowrap";
-    div.style.display = "none";
+    div.style.display = "none";  // 初始隐藏
     container.appendChild(div);
 }}
 
-// 逐个弹出提示
+// 逐个弹出提示（延迟显示）
 for(let i=0;i<tips.length;i++){{
     setTimeout(function(){{
         document.getElementById(tips[i].id).style.display = "block";
@@ -92,25 +89,24 @@ for(let i=0;i<tips.length;i++){{
 
 // 移动和碰撞逻辑
 function moveTips() {{
-    container_width = container.clientWidth;
-    container_height = container.clientHeight;
 
     for(var i=0;i<tips.length;i++){{
         var t = tips[i];
         var elem = document.getElementById(t.id);
-        if(elem.style.display === "none") continue;
+        if(elem.style.display === "none") continue; // 未显示的跳过
         t.x += t.dx;
         t.y += t.dy;
 
-        if(t.x <=0 || t.x >= container_width - tip_width) t.dx = -t.dx;
-        if(t.y <=0 || t.y >= container_height - tip_height) t.dy = -t.dy;
+        // 边界碰撞反弹
+        if(t.x <=0 || t.x >= {CONFIG['container_width']} - 150) t.dx = -t.dx;
+        if(t.y <=0 || t.y >= {CONFIG['container_height']} - 50) t.dy = -t.dy;
 
         elem.style.left = t.x + "px";
         elem.style.top = t.y + "px";
     }}
 }}
-setInterval(moveTips, {CONFIG['update_interval']});
+setInterval(moveTips, {CONFIG['update_interval']});  // 高帧率移动
 </script>
 """
 
-html(html_code, height="95vh")
+html(html_code, height=CONFIG['container_height'] + 20)
