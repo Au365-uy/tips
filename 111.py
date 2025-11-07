@@ -1,16 +1,15 @@
-import tkinter as tk
+import streamlit as st
 import random
-import time
-from threading import Thread
+import json
 
 # 配置参数
 CONFIG = {
-    'window_count': 20,    # 弹窗数量
-    'window_width': 250,
-    'window_height': 60,
-    'display_time': 5000,   # 毫秒
-    'start_delay': 0.3,     # 每个窗口启动延迟（秒）
-    'font_size': 16
+    'tip_count': 20,          # 同时显示的提示数量
+    'font_size': 16,
+    'container_width': 800,
+    'container_height': 600,
+    'move_step': 5,
+    'update_interval': 50     # 毫秒
 }
 
 TIPS = [
@@ -22,65 +21,85 @@ TIPS = [
 ]
 
 BG_COLORS = [
-    "lightpink", "skyblue", "lightgreen", "lavender", "lightyellow",
-    "plum", "coral", "bisque", "aquamarine", "mistyrose",
-    "honeydew", "lavenderblush", "oldlace"
+    "#FFC0CB", "#87CEEB", "#90EE90", "#E6E6FA", "#FFFFE0",
+    "#DDA0DD", "#FF7F50", "#FFE4C4", "#7FFFD4", "#FFE4E1",
+    "#F0FFF0", "#FFF0F5", "#FDF5E6"
 ]
 
-class TipWindow:
-    def __init__(self, master):
-        self.master = master
-        self.master.overrideredirect(True)  # 去掉窗口边框
-        self.width = CONFIG['window_width']
-        self.height = CONFIG['window_height']
-        self.screen_width = master.winfo_screenwidth()
-        self.screen_height = master.winfo_screenheight()
-        
-        # 初始随机位置
-        self.x = random.randint(0, self.screen_width - self.width)
-        self.y = random.randint(0, self.screen_height - self.height)
-        # 初始随机移动速度
-        self.dx = random.choice([-5, -4, 4, 5])
-        self.dy = random.choice([-5, -4, 4, 5])
-        
-        # 随机文字和背景
-        self.tip = random.choice(TIPS)
-        self.bg = random.choice(BG_COLORS)
-        
-        # 创建标签
-        self.label = tk.Label(master, text=self.tip, bg=self.bg,
-                              font=("微软雅黑", CONFIG['font_size']),
-                              width=30, height=3)
-        self.label.pack(fill=tk.BOTH, expand=True)
-        
-        # 设置初始位置
-        master.geometry(f"{self.width}x{self.height}+{self.x}+{self.y}")
-        master.attributes('-topmost', True)
-        
-        # 启动移动动画
-        self.move()
-        # 设置自动关闭
-        master.after(CONFIG['display_time'], master.destroy)
-    
-    def move(self):
-        self.x += self.dx
-        self.y += self.dy
-        
-        # 碰到边界反弹
-        if self.x <= 0 or self.x >= self.screen_width - self.width:
-            self.dx = -self.dx
-        if self.y <= 0 or self.y >= self.screen_height - self.height:
-            self.dy = -self.dy
-        
-        self.master.geometry(f"{self.width}x{self.height}+{self.x}+{self.y}")
-        self.master.after(50, self.move)  # 每50毫秒更新一次位置
+st.set_page_config(page_title="温馨提示", layout="wide")
+st.title("💖 随机弹窗温馨提示 💖")
 
-def start_tips():
-    for i in range(CONFIG['window_count']):
-        root = tk.Tk()
-        TipWindow(root)
-        Thread(target=root.mainloop).start()
-        time.sleep(CONFIG['start_delay'])
+# 初始化提示信息
+tips = []
+for i in range(CONFIG['tip_count']):
+    tip = {
+        'id': f"tip{i}",
+        'text': random.choice(TIPS),
+        'bg': random.choice(BG_COLORS),
+        'x': random.randint(0, CONFIG['container_width'] - 150),
+        'y': random.randint(0, CONFIG['container_height'] - 50),
+        'dx': random.choice([-CONFIG['move_step'], CONFIG['move_step']]),
+        'dy': random.choice([-CONFIG['move_step'], CONFIG['move_step']])
+    }
+    tips.append(tip)
 
-if __name__ == "__main__":
-    start_tips()
+# 生成 HTML
+html_tips = ""
+for tip in tips:
+    html_tips += f"""
+    <div id="{tip['id']}" style="
+        position:absolute;
+        left:{tip['x']}px;
+        top:{tip['y']}px;
+        background-color:{tip['bg']};
+        padding:8px 12px;
+        border-radius:12px;
+        font-size:{CONFIG['font_size']}px;
+        text-align:center;
+        white-space:nowrap;
+    ">
+        {tip['text']}
+    </div>
+    """
+
+# JavaScript 控制移动和碰撞
+html_script = f"""
+<script>
+var tips = {json.dumps(tips)};
+var containerWidth = {CONFIG['container_width']};
+var containerHeight = {CONFIG['container_height']};
+
+function moveTips() {{
+    for(var i=0;i<tips.length;i++){{
+        var t = tips[i];
+        var elem = document.getElementById(t.id);
+        t.x += t.dx;
+        t.y += t.dy;
+
+        // 边界碰撞反弹
+        if(t.x <=0 || t.x >= containerWidth - 150) t.dx = -t.dx;
+        if(t.y <=0 || t.y >= containerHeight - 50) t.dy = -t.dy;
+
+        elem.style.left = t.x + "px";
+        elem.style.top = t.y + "px";
+    }}
+}}
+setInterval(moveTips, {CONFIG['update_interval']});
+</script>
+"""
+
+# 父容器
+st.markdown(f"""
+<div style="
+    position: relative;
+    width:{CONFIG['container_width']}px;
+    height:{CONFIG['container_height']}px;
+    border:1px solid #ddd;
+    margin:auto;
+    background-color:#fff;
+    overflow:hidden;
+">
+{html_tips}
+</div>
+{html_script}
+""", unsafe_allow_html=True)
