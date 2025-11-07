@@ -1,15 +1,15 @@
 import streamlit as st
 import random
 import json
+from streamlit.components.v1 import html
 
-# 配置参数
 CONFIG = {
-    'tip_count': 20,          # 同时显示的提示数量
+    'tip_count': 20,
     'font_size': 16,
     'container_width': 800,
     'container_height': 600,
     'move_step': 5,
-    'update_interval': 50     # 毫秒
+    'update_interval': 50
 }
 
 TIPS = [
@@ -26,7 +26,6 @@ BG_COLORS = [
     "#F0FFF0", "#FFF0F5", "#FDF5E6"
 ]
 
-st.set_page_config(page_title="温馨提示", layout="wide")
 st.title("💖 随机弹窗温馨提示 💖")
 
 # 初始化提示信息
@@ -43,54 +42,9 @@ for i in range(CONFIG['tip_count']):
     }
     tips.append(tip)
 
-# 生成 HTML
-html_tips = ""
-for tip in tips:
-    html_tips += f"""
-    <div id="{tip['id']}" style="
-        position:absolute;
-        left:{tip['x']}px;
-        top:{tip['y']}px;
-        background-color:{tip['bg']};
-        padding:8px 12px;
-        border-radius:12px;
-        font-size:{CONFIG['font_size']}px;
-        text-align:center;
-        white-space:nowrap;
-    ">
-        {tip['text']}
-    </div>
-    """
-
-# JavaScript 控制移动和碰撞
-html_script = f"""
-<script>
-var tips = {json.dumps(tips)};
-var containerWidth = {CONFIG['container_width']};
-var containerHeight = {CONFIG['container_height']};
-
-function moveTips() {{
-    for(var i=0;i<tips.length;i++){{
-        var t = tips[i];
-        var elem = document.getElementById(t.id);
-        t.x += t.dx;
-        t.y += t.dy;
-
-        // 边界碰撞反弹
-        if(t.x <=0 || t.x >= containerWidth - 150) t.dx = -t.dx;
-        if(t.y <=0 || t.y >= containerHeight - 50) t.dy = -t.dy;
-
-        elem.style.left = t.x + "px";
-        elem.style.top = t.y + "px";
-    }}
-}}
-setInterval(moveTips, {CONFIG['update_interval']});
-</script>
-"""
-
-# 父容器
-st.markdown(f"""
-<div style="
+# HTML + JS
+html_code = f"""
+<div id="container" style="
     position: relative;
     width:{CONFIG['container_width']}px;
     height:{CONFIG['container_height']}px;
@@ -99,7 +53,45 @@ st.markdown(f"""
     background-color:#fff;
     overflow:hidden;
 ">
-{html_tips}
 </div>
-{html_script}
-""", unsafe_allow_html=True)
+
+<script>
+var tips = {json.dumps(tips)};
+var container = document.getElementById("container");
+
+for(var i=0;i<tips.length;i++){{
+    var t = tips[i];
+    var div = document.createElement("div");
+    div.id = t.id;
+    div.innerHTML = t.text;
+    div.style.position = "absolute";
+    div.style.left = t.x + "px";
+    div.style.top = t.y + "px";
+    div.style.backgroundColor = t.bg;
+    div.style.padding = "8px 12px";
+    div.style.borderRadius = "12px";
+    div.style.fontSize = "{CONFIG['font_size']}px";
+    div.style.whiteSpace = "nowrap";
+    container.appendChild(div);
+}}
+
+function moveTips() {{
+    for(var i=0;i<tips.length;i++){{
+        var t = tips[i];
+        var elem = document.getElementById(t.id);
+        t.x += t.dx;
+        t.y += t.dy;
+
+        if(t.x <=0 || t.x >= {CONFIG['container_width']} - 150) t.dx = -t.dx;
+        if(t.y <=0 || t.y >= {CONFIG['container_height']} - 50) t.dy = -t.dy;
+
+        elem.style.left = t.x + "px";
+        elem.style.top = t.y + "px";
+    }}
+}}
+
+setInterval(moveTips, {CONFIG['update_interval']});
+</script>
+"""
+
+html(html_code, height=CONFIG['container_height'] + 20)
